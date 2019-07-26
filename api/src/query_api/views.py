@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -7,6 +8,7 @@ from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 
 import boto3
 from botocore.client import Config
+import requests
 
 # Create your views here.
 class UploadTableView(APIView):
@@ -122,3 +124,45 @@ class QueryStatusView(APIView):
             )
 
         return Response(data, status=status.HTTP_200_OK)
+
+class ClientIdView(APIView):
+    parser_class = (JSONParser,)
+
+    def get(self, request):
+        client_id = os.environ['COLUMBUS_CLIENT_ID']
+        return Response({"client_id": client_id})
+
+class AuthenticationTokenView(APIView):
+    parser_class = (JSONParser,)
+
+    @csrf_exempt
+    def post(self, request, format=None):
+        code = request.data['code']
+        redirect_uri = request.data['redirect_uri']
+        data = {
+            'grant_type': 'authorization_code',
+            'code': code,
+            'redirect_uri': redirect_uri,
+            'client_id': os.environ['COLUMBUS_CLIENT_ID'],
+            'client_secret': os.environ['COLUMBUS_CLIENT_SECRET']
+        }
+        response = requests.post(url='http://authentication.columbusecosystem.com/o/token/', data=data)
+
+        return Response(response.json(), status=response.status_code)
+
+class SaveToCDriveView(APIView):
+    parser_class = (JSONParser,)
+
+    @csrf_exempt
+    def post(self, request, format=None):
+        access_token = request.data['access_token']
+        download_url = request.data['download_url']
+
+        r = requests.get(url=download_url)
+        with open('result.csv', 'wb+') as f:
+            f.write(r.content)
+            f.seek(0)
+            file_arg = {'file': ('result.csv', f)}
+            response = requests.post('https://api.cdrive.columbusecosystem.com/upload/', files=file_arg, headers={'Authorization':'Bearer ' + access_token})
+
+        return Response(status=200)
