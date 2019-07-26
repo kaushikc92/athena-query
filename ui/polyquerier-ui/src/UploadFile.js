@@ -1,7 +1,6 @@
 import React from 'react';
 import { Redirect } from 'react-router-dom';
 import axios from 'axios';
-import { backendUrl } from './GlobalVariables';
 import './UploadFile.css';
 
 class UploadFile extends React.Component {
@@ -30,7 +29,7 @@ class UploadFile extends React.Component {
         });
         const request = axios({
             method: 'POST',
-            url: `${backendUrl}upload/`,
+            url: window.location.protocol + "//" + window.location.hostname + window.location.pathname + "api/upload/",
             data: data
         });
         request.then(

@@ -1,6 +1,5 @@
 import React from 'react';
 import axios from 'axios';
-import { backendUrl } from './GlobalVariables';
 import QueryResults from './QueryResults';
 import './Query.css';
 
@@ -21,7 +20,7 @@ class Query extends React.Component {
         this.setState({queryExecutionId: ''});
         const request = axios({
             method: 'POST',
-            url: `${backendUrl}run-query/`,
+            url:  window.location.protocol + "//" + window.location.hostname + window.location.pathname + "api/run-query/",
             data: data
         });
         request.then(

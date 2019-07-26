@@ -1,6 +1,5 @@
 import React from 'react';
 import axios from 'axios';
-import { backendUrl } from './GlobalVariables';
 
 class QueryResults extends React.Component {
     constructor(props) {
@@ -24,7 +23,7 @@ class QueryResults extends React.Component {
 
         const request = axios({
             method: 'GET',
-            url: `${backendUrl}query-status/?query_id=${this.props.queryExecutionId}`,
+            url: window.location.protocol + "//" + window.location.hostname + window.location.pathname + "api/query-status/?query_id=" + this.props.queryExecutionId,
         });
         request.then(
             response => {
@@ -47,18 +46,21 @@ class QueryResults extends React.Component {
     }
     render() {
         if(this.props.queryExecutionId === '') return (null);
-        let downloadLink;
+        let downloadLinks;
         if(this.state.isComplete) {
-            downloadLink = <a className="btn btn-primary btn-lg" href={this.state.downloadUrl}> Download Results </a> ;
+            downloadLinks = 
+              <div>
+                <a className="btn btn-primary btn-lg" href={this.state.downloadUrl}> Download to Local </a>
+                <a className="btn btn-primary btn-lg ml-4" href""> Save to CDrive </a> 
+              </div> ;
         } else {
-            downloadLink = '';
+            downloadLinks = '';
         }
-        //let runtimeStat;
         return(
             <div>
                 <h1 className="h5 mb-3 font-weight-normal">Query Status: {this.state.status}</h1>
                 <h1 className="h5 mb-3 font-weight-normal">Elapsed Time: {this.state.runtime/1000 }s</h1>
-                {downloadLink}
+                {downloadLinks}
             </div>
         );
     }
