@@ -10,6 +10,8 @@ import boto3
 from botocore.client import Config
 import requests
 
+import os
+
 # Create your views here.
 class UploadTableView(APIView):
     parser_class = (MultiPartParser, FormParser)

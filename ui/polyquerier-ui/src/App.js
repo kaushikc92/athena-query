@@ -13,7 +13,7 @@ class App extends React.Component {
   }
   authenticateUser() {
     const cookies = new Cookies();
-    var columbus_token = cookies.get('columbus_token');
+    var columbus_token = cookies.get('pquery_token');
     if (columbus_token !== undefined) {
       this.setState({isLoggedIn: true});
       return(null);
@@ -44,7 +44,7 @@ class App extends React.Component {
       });
       request.then(
         response => {
-          cookies.set('columbus_token', response.data.access_token);
+          cookies.set('pquery_token', response.data.access_token);
           this.setState({isLoggedIn: true});
         },
         err => {

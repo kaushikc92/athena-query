@@ -78,9 +78,8 @@ class QueryResults extends React.Component {
         let cdriveLink;
         if(this.state.isSaved) {
           cdriveLink = 
-            <div>
-              <h1 className="h5 mb-3 font-weight-normal">Saved!</h1>
-              <a href="https://cdrive.columbusecosystem.com"> View in CDrive</a>
+            <div className="h5 mt-3 font-weight-normal" >
+              Saved! <a href="https://cdrive.columbusecosystem.com"> View in CDrive</a>
             </div> ;
         } else {
         }
