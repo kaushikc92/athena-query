@@ -1,6 +1,7 @@
 import React from 'react';
 import { Redirect } from 'react-router-dom';
 import axios from 'axios';
+import Cookies from 'universal-cookie';
 import './UploadFile.css';
 
 class UploadFile extends React.Component {
@@ -9,39 +10,70 @@ class UploadFile extends React.Component {
         this.state = {
             redirectToQueryPage: false,
             isLoading: false,
+            tableName: '',
+            dataPath: '',
+            schemaPath: ''
         }
         this.handleSubmit = this.handleSubmit.bind(this);
         this.handleChange = this.handleChange.bind(this);
-        this.fileInput = React.createRef();
-        this.schemaFileInput = React.createRef();
+        this.handleDataPathChange = this.handleDataPathChange.bind(this);
+        this.handleSchemaPathChange = this.handleSchemaPathChange.bind(this);
     }
     handleSubmit(event) {
         event.preventDefault();
-        const data = new FormData();
-        var files = this.fileInput.current.files;
-        for(var i = 0; i < files.length; i++) {
-            data.append('files[]', files[i]);
-        }
-        data.append('schema_file', this.schemaFileInput.current.files[0]);
-        data.append('table_name', this.state.tableName);
+        
         this.setState({
             isLoading: true,
         });
+
+        var cdriveApiUrl = "https://api.cdrive.columbusecosystem.com/";
+        const data = new FormData();
+        data.append('table_name', this.state.tableName);
+
+        const cookies = new Cookies();
+        var auth_header = 'Bearer ' + cookies.get('pquery_token');
+
         const request = axios({
-            method: 'POST',
-            url: window.location.protocol + "//" + window.location.hostname + window.location.pathname + "api/upload/",
-            data: data
+          method: 'GET',
+          url: `${cdriveApiUrl}download/?path=${this.state.dataPath}`,
+          headers: {'Authorization': auth_header}
         });
+
         request.then(
-            response => {
-                this.setState({
-                    redirectToQueryPage: true,
+          response => {
+            data.append('data_url', response.data.download_url);
+            axios({
+              method: 'GET',
+              url: `${cdriveApiUrl}download/?path=${this.state.schemaPath}`,
+              headers: {'Authorization': auth_header}
+            }).then(
+              resp2 => {
+                data.append('schema_url', resp2.data.download_url);
+                const req3 = axios({
+                    method: 'POST',
+                    url: window.location.protocol + "//" + window.location.hostname + window.location.pathname + "api/upload/",
+                    data: data
                 });
-            },
+                req3.then(
+                    resp3 => {
+                        this.setState({
+                            redirectToQueryPage: true,
+                        });
+                    },
+                );
+              },
+            );
+          },
         );
     }
     handleChange(event) {
         this.setState({tableName: event.target.value});
+    }
+    handleDataPathChange(event) {
+      this.setState({dataPath: event.target.value});
+    }
+    handleSchemaPathChange(event) {
+      this.setState({schemaPath: event.target.value});
     }
     render() {
         if (this.state.redirectToQueryPage) {
@@ -61,17 +93,13 @@ class UploadFile extends React.Component {
                         value={this.state.tableName} onChange={this.handleChange} required autoFocus>
                     </input>
                     <br />
-                    <div className="form-group">
-                        <label htmlFor="data-files-input-id">Upload Data Files:</label>
-                        <input type="file" className="form-control-file" id="data-files-input-id"
-                        ref={this.fileInput} multiple />
-                    </div>
+                    <input type="text" className="form-control" placeholder="Enter CDrive Path to CSV File" 
+                        value={this.state.dataPath} onChange={this.handleDataPathChange} required>
+                    </input>
                     <br />
-                    <div className="form-group">
-                        <label htmlFor="schema-file-input-id">Upload Schema File:</label>
-                        <input type="file" className="form-control-file" id="schema-file-input-id"
-                        ref={this.schemaFileInput} />
-                    </div>
+                    <input type="text" className="form-control" placeholder="Enter CDrive Path to Schema File" 
+                        value={this.state.schemaPath} onChange={this.handleSchemaPathChange} required>
+                    </input>
                     <br />
                     {createButton}
                 </form>

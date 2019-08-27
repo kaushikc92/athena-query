@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 
+from tempfile import TemporaryFile
+
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -18,17 +20,25 @@ class UploadTableView(APIView):
 
     def post(self, request):
         table_name = request.data['table_name']
+        data_url = request.data['data_url']
+        schema_url = request.data['schema_url']
+
         s3 = boto3.client(
             's3',
             region_name = 'us-east-1',
             aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
             aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
         )
-        for csvfile in request.data.getlist('files[]'):
-            object_path = table_name + '/' + csvfile.name
-            s3.upload_fileobj(csvfile, settings.AWS_STORAGE_BUCKET_NAME, object_path)
 
-        schema = str(request.data['schema_file'].read(), 'utf-8').rstrip()
+        response = requests.get(data_url)
+        with TemporaryFile() as tf:
+            tf.write(response.content)
+            object_path = table_name + '/' + 'data.csv'
+            tf.seek(0,0)
+            s3.upload_fileobj(tf, settings.AWS_STORAGE_BUCKET_NAME, object_path)
+
+        response = requests.get(schema_url)
+        schema = str(response.content, 'utf-8').rstrip()
 
         query_string = (
             'CREATE EXTERNAL TABLE IF NOT EXISTS '
@@ -159,12 +169,16 @@ class SaveToCDriveView(APIView):
     def post(self, request, format=None):
         access_token = request.data['access_token']
         download_url = request.data['download_url']
+        path = request.data['path']
 
+        start_index = path.rfind('/')
+        parent_path = path[0 : start_index]
+        file_name = path[start_index + 1 : len(path)]
         r = requests.get(url=download_url)
         with open('result.csv', 'wb+') as f:
             f.write(r.content)
             f.seek(0)
-            file_arg = {'file': ('result.csv', f)}
+            file_arg = {'file': (file_name, f), 'path': (None, parent_path)}
             response = requests.post('https://api.cdrive.columbusecosystem.com/upload/', files=file_arg, headers={'Authorization':'Bearer ' + access_token})
 
         return Response(status=200)

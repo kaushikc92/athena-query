@@ -11,7 +11,9 @@ class QueryResults extends React.Component {
             isComplete: false,
             isSaved: false,
             downloadUrl: '',
+            cdrivePath: ''
         }
+        this.handlePathChange = this.handlePathChange.bind(this);
         this.handleStatusUpdate = this.handleStatusUpdate.bind(this);
         this.saveToCdrive = this.saveToCdrive.bind(this);
     }
@@ -47,6 +49,9 @@ class QueryResults extends React.Component {
             },
         );
     }
+    handlePathChange(event){
+      this.setState({cdrivePath: event.target.value});
+    }
     saveToCdrive() {
       const cookies = new Cookies();
       const request = axios({
@@ -54,7 +59,8 @@ class QueryResults extends React.Component {
         url: window.location.protocol + "//" + window.location.hostname + window.location.pathname + "api/save/",
         data: {
           access_token: cookies.get('columbus_token'),
-          download_url: this.state.downloadUrl
+          download_url: this.state.downloadUrl,
+          path: this.state.cdrivePath
         }
       });
       request.then(
@@ -70,6 +76,7 @@ class QueryResults extends React.Component {
             downloadLinks = 
               <div>
                 <a className="btn btn-primary btn-lg" href={this.state.downloadUrl}> Download to Local </a>
+                <input type="text" placeholder="Enter CDrive Path" value={this.state.cdrivePath} onChange={this.handlePathChange} />
                 <button className="btn btn-primary btn-lg ml-4" onClick={this.saveToCdrive}> Save to CDrive </button> 
               </div> ;
         } else {
