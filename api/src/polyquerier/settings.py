@@ -120,8 +120,8 @@ USE_L10N = True
 
 USE_TZ = True
 
-AWS_ACCESS_KEY_ID = 'AKIA4ZBH357OOACYYWLM'
-AWS_SECRET_ACCESS_KEY = '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'
+AWS_ACCESS_KEY_ID = ''
+AWS_SECRET_ACCESS_KEY = ''
 AWS_STORAGE_BUCKET_NAME = 'lake-data' 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
